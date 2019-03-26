@@ -1,0 +1,651 @@
+---
+title: "Text Mining (Tweets about Sprint)"
+output: html_document
+---
+
+
+
+## R Markdown
+
+T
+
+
+```r
+install.packages("data.table", repos = "https://cran.r-project.org")
+```
+
+```
+## Installing package into 'C:/Users/Rajan/Documents/R/win-library/3.5'
+## (as 'lib' is unspecified)
+```
+
+```
+## package 'data.table' successfully unpacked and MD5 sums checked
+## 
+## The downloaded binary packages are in
+## 	C:\Users\Rajan\AppData\Local\Temp\Rtmp23e4i2\downloaded_packages
+```
+
+
+
+```r
+library(data.table)
+```
+
+```
+## Warning: package 'data.table' was built under R version 3.5.3
+```
+
+```
+## data.table 1.12.0  Latest news: r-datatable.com
+```
+
+
+
+```r
+data = fread("J:/tweets_about_sprint.csv", 
+             strip.white=T, sep=",", header=T, na.strings=c(""," ", "NA","nan", "NaN", "nannan"))
+```
+
+```
+## Warning in fread("J:/tweets_about_sprint.csv", strip.white = T, sep
+## = ",", : na.strings[2]==" " consists only of whitespace, ignoring.
+## strip.white==TRUE (default) and "" is present in na.strings, so any number
+## of spaces in string columns will already be read as <NA>.
+```
+
+
+
+```r
+data
+```
+
+```
+##                   user
+##     1:       CA2016_sp
+##     2: lety_rodriguezz
+##     3: samanthajfacci1
+##     4:      KimGibbs90
+##     5:       khyleedt_
+##    ---                
+## 49996:      SunSolaris
+## 49997:    Leo_Mosquito
+## 49998:  AustinBrooksie
+## 49999:     JustinC0714
+## 50000:     christafaux
+##                                                                                                                                    tweet
+##     1:    Ya casi es hora del FanHQ de sprint en ShowboxPresents Hoy 6pm Entrada gratis m sica en vivo y mucho m s https t co MLoPL7jBcs
+##     2:                                                                   sprintcare everything is figured out now but sprint still sucks
+##     3:                                                                                             sprint too bad we didn t post in time
+##     4:                                                    I just checked in Sprint with mPLUSPlaces Download today https t co VjzSMxQcVX
+##     5:                                                                             RT JPowell124 Monthly reminder tht sprint still sucks
+##    ---                                                                                                                                  
+## 49996: Sprint never got back to me throwing me out of their store Nor has the marketing co Will contact the vendor https t co S3iKBOGfBo
+## 49997:                                                                   sprintcare I m tired of your shit sprint get your shit together
+## 49998:      RT JoeGibbsRacing TBT On July 9 2011 KyleBusch won the inaugural NASCAR Sprint Cup race KySpeedway NASCAR mmschocolate https
+## 49999:                                                    I just checked in Sprint with mPLUSPlaces Download today https t co lfAuc6M7N8
+## 50000:                                       sprintcare YES and i ve called multiple times and i was basically told just to deal with it
+##                date
+##     1: 6/16/16 0:00
+##     2: 6/16/16 0:01
+##     3: 6/16/16 0:03
+##     4: 6/16/16 0:03
+##     5: 6/16/16 0:04
+##    ---             
+## 49996: 7/7/16 22:21
+## 49997: 7/7/16 22:22
+## 49998: 7/7/16 22:22
+## 49999: 7/7/16 22:24
+## 50000: 7/7/16 22:24
+```
+
+```r
+data$tweet_id <- seq.int(nrow(data))
+
+head(data, n=5)
+```
+
+```
+##               user
+## 1:       CA2016_sp
+## 2: lety_rodriguezz
+## 3: samanthajfacci1
+## 4:      KimGibbs90
+## 5:       khyleedt_
+##                                                                                                                             tweet
+## 1: Ya casi es hora del FanHQ de sprint en ShowboxPresents Hoy 6pm Entrada gratis m sica en vivo y mucho m s https t co MLoPL7jBcs
+## 2:                                                                sprintcare everything is figured out now but sprint still sucks
+## 3:                                                                                          sprint too bad we didn t post in time
+## 4:                                                 I just checked in Sprint with mPLUSPlaces Download today https t co VjzSMxQcVX
+## 5:                                                                          RT JPowell124 Monthly reminder tht sprint still sucks
+##            date tweet_id
+## 1: 6/16/16 0:00        1
+## 2: 6/16/16 0:01        2
+## 3: 6/16/16 0:03        3
+## 4: 6/16/16 0:03        4
+## 5: 6/16/16 0:04        5
+```
+
+
+
+```r
+install.packages("tidytext", repos = "https://cran.r-project.org")
+```
+
+```
+## Installing package into 'C:/Users/Rajan/Documents/R/win-library/3.5'
+## (as 'lib' is unspecified)
+```
+
+```
+## package 'tidytext' successfully unpacked and MD5 sums checked
+## 
+## The downloaded binary packages are in
+## 	C:\Users\Rajan\AppData\Local\Temp\Rtmp23e4i2\downloaded_packages
+```
+
+
+
+
+```r
+install.packages("dplyr", repos = "https://cran.r-project.org")
+```
+
+```
+## Installing package into 'C:/Users/Rajan/Documents/R/win-library/3.5'
+## (as 'lib' is unspecified)
+```
+
+```
+## package 'dplyr' successfully unpacked and MD5 sums checked
+## 
+## The downloaded binary packages are in
+## 	C:\Users\Rajan\AppData\Local\Temp\Rtmp23e4i2\downloaded_packages
+```
+
+
+
+
+```r
+library(dplyr)
+```
+
+```
+## Warning: package 'dplyr' was built under R version 3.5.3
+```
+
+```
+## 
+## Attaching package: 'dplyr'
+```
+
+```
+## The following objects are masked from 'package:data.table':
+## 
+##     between, first, last
+```
+
+```
+## The following objects are masked from 'package:stats':
+## 
+##     filter, lag
+```
+
+```
+## The following objects are masked from 'package:base':
+## 
+##     intersect, setdiff, setequal, union
+```
+
+
+
+```r
+library(tidytext)
+```
+
+```
+## Warning: package 'tidytext' was built under R version 3.5.3
+```
+
+
+
+```r
+tidy_text <- data %>%
+  unnest_tokens(word, tweet)
+```
+
+
+```r
+data(stop_words)
+```
+
+
+
+```r
+tidy_text <- tidy_text %>%
+  anti_join(stop_words)
+```
+
+```
+## Joining, by = "word"
+```
+
+
+
+```r
+tidy_text %>%
+  count(word, sort = TRUE)
+```
+
+```
+## # A tibble: 38,767 x 2
+##    word           n
+##    <chr>      <int>
+##  1 sprint     45952
+##  2 https      30369
+##  3 rt         19618
+##  4 verizon    10389
+##  5 amp         8013
+##  6 sprintcare  7794
+##  7 geico       5461
+##  8 wellsfargo  4947
+##  9 mobile      3912
+## 10 download    3717
+## # ... with 38,757 more rows
+```
+
+
+
+```r
+library(ggplot2)
+```
+
+
+
+
+```r
+tidy_text %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 1000) %>%
+  mutate(word = reorder(word, n)) %>%
+  ggplot(aes(word, n)) +
+  geom_bar(stat = "identity") +
+  xlab(NULL) +
+  coord_flip()
+```
+
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png)
+
+
+
+
+```r
+tweet_words <- data %>%
+  unnest_tokens(word, tweet) %>%
+  count(user, word, sort = TRUE) %>% 
+  ungroup()
+```
+
+
+
+```r
+total_words <- tweet_words %>% 
+  group_by(user) %>% 
+  summarize(total = sum(n)) 
+```
+
+
+
+
+```r
+head(total_words)
+```
+
+```
+## # A tibble: 6 x 2
+##   user          total
+##   <chr>         <int>
+## 1 ______ChrisJ     24
+## 2 ______MARISOL    23
+## 3 ____Baroo        16
+## 4 ____BRANEISHA    70
+## 5 ____Cook____      7
+## 6 ____IDFWU         9
+```
+
+
+
+```r
+tweet_words <- left_join(tweet_words, total_words)
+```
+
+```
+## Joining, by = "user"
+```
+
+
+
+```r
+head(tweet_words)
+```
+
+```
+## # A tibble: 6 x 4
+##   user       word            n total
+##   <chr>      <chr>       <int> <int>
+## 1 KeepMyCoat cnnblackout   275  4046
+## 2 KeepMyCoat https         275  4046
+## 3 KeepMyCoat sprint        275  4046
+## 4 KeepMyCoat etrade        274  4046
+## 5 KeepMyCoat geico         274  4046
+## 6 KeepMyCoat wellsfargo    274  4046
+```
+
+
+
+```r
+tweet_words <- tweet_words %>%
+  bind_tf_idf(word, user, n)
+```
+
+
+
+```r
+head(tweet_words)
+```
+
+```
+## # A tibble: 6 x 7
+##   user       word            n total     tf    idf  tf_idf
+##   <chr>      <chr>       <int> <int>  <dbl>  <dbl>   <dbl>
+## 1 KeepMyCoat cnnblackout   275  4046 0.0680 5.89   0.401  
+## 2 KeepMyCoat https         275  4046 0.0680 0.557  0.0378 
+## 3 KeepMyCoat sprint        275  4046 0.0680 0.0662 0.00450
+## 4 KeepMyCoat etrade        274  4046 0.0677 2.60   0.176  
+## 5 KeepMyCoat geico         274  4046 0.0677 2.15   0.145  
+## 6 KeepMyCoat wellsfargo    274  4046 0.0677 2.22   0.151
+```
+
+
+
+```r
+nrcjoy <- get_sentiments("nrc") %>% 
+  filter(sentiment == "joy")
+```
+
+
+
+```r
+tidy_text %>%
+  inner_join(nrcjoy) %>%
+  count(word, sort = TRUE)
+```
+
+```
+## Joining, by = "word"
+```
+
+```
+## # A tibble: 275 x 2
+##    word      n
+##    <chr> <int>
+##  1 food   1212
+##  2 pay     842
+##  3 save    490
+##  4 happy   452
+##  5 money   388
+##  6 love    373
+##  7 deal    248
+##  8 fun     218
+##  9 hope    157
+## 10 white   139
+## # ... with 265 more rows
+```
+
+
+
+```r
+sentiment <- tidy_text %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE)
+```
+
+```
+## Joining, by = "word"
+```
+
+
+
+
+```r
+head(sentiment)
+```
+
+```
+## # A tibble: 6 x 3
+##   word        sentiment     n
+##   <chr>       <chr>     <int>
+## 1 free        positive   2422
+## 2 progressive positive   1953
+## 3 trump       positive   1877
+## 4 supporting  positive   1192
+## 5 kill        negative   1165
+## 6 endanger    negative   1105
+```
+
+
+
+
+```r
+sentiment <- tidy_text %>%
+  filter(user == "KeepMyCoat") %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) 
+```
+
+```
+## Joining, by = "word"
+```
+
+
+
+```r
+library(wordcloud)
+```
+
+```
+## Warning: package 'wordcloud' was built under R version 3.5.3
+```
+
+```
+## Loading required package: RColorBrewer
+```
+
+
+
+
+```r
+tidy_text %>%
+  anti_join(stop_words) %>%
+  count(word) %>%
+  with(wordcloud(word, n, max.words = 100))
+```
+
+```
+## Joining, by = "word"
+```
+
+![plot of chunk unnamed-chunk-28](figure/unnamed-chunk-28-1.png)
+
+
+
+
+```r
+library(reshape2)
+```
+
+```
+## 
+## Attaching package: 'reshape2'
+```
+
+```
+## The following objects are masked from 'package:data.table':
+## 
+##     dcast, melt
+```
+
+
+
+```r
+tidy_text %>%
+  inner_join(get_sentiments("bing")) %>%
+  count(word, sentiment, sort = TRUE) %>%
+  acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("#F8766D", "#00BFC4"),
+                   max.words = 100)
+```
+
+```
+## Joining, by = "word"
+```
+
+![plot of chunk unnamed-chunk-30](figure/unnamed-chunk-30-1.png)
+
+
+
+```r
+library(tm)
+```
+
+```
+## Warning: package 'tm' was built under R version 3.5.3
+```
+
+```
+## Loading required package: NLP
+```
+
+```
+## 
+## Attaching package: 'NLP'
+```
+
+```
+## The following object is masked from 'package:ggplot2':
+## 
+##     annotate
+```
+
+```r
+library(wordcloud)
+library(topicmodels)
+library(slam)
+```
+
+```
+## Warning: package 'slam' was built under R version 3.5.2
+```
+
+```
+## 
+## Attaching package: 'slam'
+```
+
+```
+## The following object is masked from 'package:data.table':
+## 
+##     rollup
+```
+
+
+
+
+```r
+data <- data[1:1000,]
+```
+
+
+
+
+```r
+corpus <- Corpus(VectorSource(data$tweet), readerControl=list(language="en"))
+```
+
+
+
+```r
+tweet_dtm <- DocumentTermMatrix(corpus, control = list(stopwords = TRUE, minWordLength = 3, removeNumbers = TRUE, removePunctuation = TRUE))
+```
+
+
+
+
+```r
+tweet_dtm
+```
+
+```
+## <<DocumentTermMatrix (documents: 1000, terms: 2399)>>
+## Non-/sparse entries: 9442/2389558
+## Sparsity           : 100%
+## Maximal term length: 57
+## Weighting          : term frequency (tf)
+```
+
+
+
+```r
+lda <- LDA(tweet_dtm, k = 2, control = list(seed = 1234))
+```
+
+
+
+```r
+lda
+```
+
+```
+## A LDA_VEM topic model with 2 topics.
+```
+
+
+
+
+
+```r
+library(tidytext)
+```
+
+
+
+```r
+lda_td <- tidy(lda)
+```
+
+
+
+
+```r
+top_terms <- lda_td %>%
+  group_by(topic) %>%
+  top_n(10, beta) %>%
+  ungroup() %>%
+  arrange(topic, -beta)
+```
+
+
+
+
+```r
+top_terms %>%
+  mutate(term = reorder(term, beta)) %>%
+  ggplot(aes(term, beta, fill = factor(topic))) +
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  facet_wrap(~ topic, scales = "free") +
+  coord_flip()
+```
+
+![plot of chunk unnamed-chunk-41](figure/unnamed-chunk-41-1.png)
+
+
